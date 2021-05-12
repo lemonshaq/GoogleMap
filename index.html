@@ -63,7 +63,7 @@
         margin-left: 12px;
         padding: 0 11px 0 13px;
         text-overflow: ellipsis;
-        width: 200px;
+        width: 350px;
       }
 
       #origin-input:focus,
@@ -83,6 +83,25 @@
         font-size: 13px;
         font-weight: 300;
       }
+      .custom-map-control-button {
+        appearance: button;
+        background-color: #fff;
+        border: 0;
+        border-radius: 2px;
+        box-shadow: 0 1px 4px -1px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+        margin-top: 20px;
+        margin-right: 10px;
+        margin-left: 15px;
+        margin-bottom: 10px;
+        padding: 0 0.5em;
+        height: 20px;
+        font: 400 15px Roboto, Arial, sans-serif;
+        overflow: hidden;
+      }
+      .custom-map-control-button:hover {
+        background: #ebebeb;
+      }
     </style>
     <script>
       // This example requires the Places library. Include the libraries=places
@@ -96,15 +115,14 @@
           zoom: 15,
         });
         new AutocompleteDirectionsHandler(map);
+        
       }
-
       class AutocompleteDirectionsHandler {
         constructor(map) {
           this.map = map;
           this.originPlaceId = "";
           this.destinationPlaceId = "";
           this.travelMode = google.maps.TravelMode.TRANSIT;
-
           this.directionsService = new google.maps.DirectionsService();
           this.directionsRenderer = new google.maps.DirectionsRenderer();
           this.directionsRenderer.setPanel(document.getElementById("right-panel"));
@@ -116,6 +134,9 @@
           const originAutocomplete = new google.maps.places.Autocomplete(
             originInput
           );
+          const locationButton = document.createElement("button");
+          locationButton.textContent = "Start with my Current Location";
+          locationButton.classList.add("custom-map-control-button");
           originAutocomplete.setFields(["place_id"]);
           const destinationAutocomplete = new google.maps.places.Autocomplete(
             destinationInput
@@ -144,6 +165,44 @@
           this.map.controls[google.maps.ControlPosition.TOP_LEFT].push(
             modeSelector
           );
+          this.map.controls[google.maps.ControlPosition.LEFT].push(
+          locationButton
+          );
+          locationButton.addEventListener("click", () => {
+            // Try HTML5 geolocation.
+            if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(
+                (position) => {
+                  const pos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                  };
+                  map.setCenter(pos);
+                  var geocoder = new google.maps.Geocoder;
+                  geocoder.geocode({'location': pos}, function(results, status) {
+                  if (status === google.maps.GeocoderStatus.OK) {
+                    if (results[1]) {
+                      console.log(results[1]);
+                      document.getElementById("origin-input").value= results[1].formatted_address
+                      this.originPlaceId = results[1].place_id
+                      document.getElementById("origin-input").select()
+                    } else {
+                      window.alert('No results found');
+                    }
+                  } else {
+                    window.alert('Geocoder failed due to: ' + status);
+                  }
+                  });
+                },
+                () => {
+                  handleLocationError(true, infoWindow, map.getCenter());
+                }
+              );
+            } else {
+              // Browser doesn't support Geolocation
+              handleLocationError(false, infoWindow, map.getCenter());
+            }
+          });
         }
         // Autocomplete.
         setupClickListener(id, mode) {
@@ -176,6 +235,7 @@
             return;
           }
           const me = this;
+          console.log(this.originPlaceId)
           this.directionsService.route(
             {
               origin: { placeId: this.originPlaceId },
@@ -184,6 +244,7 @@
             },
             (response, status) => {
               if (status === "OK") {
+                
                 this.rightp.style.display ='block';
                 me.directionsRenderer.setDirections(response);
               } else {
@@ -191,8 +252,8 @@
               }
             }
           );
-        }
       }
+    }
     </script>
   </head>
   <body>
