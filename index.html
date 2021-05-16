@@ -114,6 +114,12 @@
           center: { lat: -37.8136, lng: 144.9631 },
           zoom: 15,
         });
+        var ctaLayer = new google.maps.KmlLayer({
+          url: 'https://www.4fewerwheels.tk/wp-content/map/Bike.kmz',
+          scale: 0.1,
+          map: map
+        });
+        ctaLayer.setMap(map);
         new AutocompleteDirectionsHandler(map);
         
       }
